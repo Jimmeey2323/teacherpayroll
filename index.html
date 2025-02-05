@@ -1,275 +1,515 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Feedback Management</title>
+    <title>File Upload and Data Processing</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"></link>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body {
             font-family: 'Roboto', sans-serif;
+            background-color: #f0f4f8;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        .drag-drop-area {
+            border: 2px dashed #4a4a4a;
+            padding: 90px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            background-color: #ffffff;
+            transition: background-color 0.3s ease;
+        }
+        .drag-drop-area:hover {
+            background-color: #cdcdcd;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+            background-color: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            border-bottom: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            height: 20px;
+            white-space: nowrap;
+        }
+        th {
+            background-color: #0075ea;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+            transition: background-color 0.3s ease;
+        }
+        .button {
+            background-color: #2e3032;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .button:hover {
+            background-color: #0075ea;
+        }
+        .collapsible {
+            cursor: pointer;
+            padding: 10px;
+            width: 100%;
+            border-radius: 10px;
+            text-align: left;
+            outline: none;
+            font-size: 15px;
+            background-color: #0075ea;
+            color: white;
+            border: 2px solid #ffffff;
+            margin-bottom: 10px;
+        }
+        .active, .collapsible:hover {
+            background-color: #fbfbfb;
+            color: black;
+        }
+        .content {
+            padding: 0 18px;
+            display: block;
+            overflow: hidden;
+            background-color: #f9f9f9;
+        }
+        .icon {
+            cursor: pointer;
+            font-size: 24px;
+            color: #4A90E2;
+            margin-top: 10px;
         }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
-    <div class="container mx-auto p-4">
-        <header class="mb-8">
-            <h1 class="text-3xl font-bold text-center">Feedback Management</h1>
-        </header>
-        <div class="overflow-x-auto mb-8">
-            <table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
-                <thead class="bg-gray-800 text-white">
-                    <tr>
-                        <th class="w-1/6 py-3 px-4 uppercase font-semibold text-sm text-left">Sub Category</th>
-                        <th class="w-1/6 py-3 px-4 uppercase font-semibold text-sm text-left">Category</th>
-                        <th class="w-1/6 py-3 px-4 uppercase font-semibold text-sm text-left">Priority Level</th>
-                        <th class="w-1/6 py-3 px-4 uppercase font-semibold text-sm text-left">Accountable Team</th>
-                        <th class="w-1/6 py-3 px-4 uppercase font-semibold text-sm text-left">TAT</th>
-                        <th class="w-1/6 py-3 px-4 uppercase font-semibold text-sm text-left">Point Person</th>
-                    </tr>
-                </thead>
-                <tbody class="text-gray-700">
-                    <tr class="border-b">
-                        <td class="py-3 px-4">Cleanliness</td>
-                        <td class="py-3 px-4">Facilities Feedback</td>
-                        <td class="py-3 px-4 text-red-500">High</td>
-                        <td class="py-3 px-4">Operations/Facility</td>
-                        <td class="py-3 px-4">4 hours</td>
-                        <td class="py-3 px-4">Facility Manager</td>
-                    </tr>
-                    <tr class="border-b bg-gray-50">
-                        <td class="py-3 px-4">Equipment Maintenance</td>
-                        <td class="py-3 px-4">Facilities Feedback</td>
-                        <td class="py-3 px-4 text-red-500">High</td>
-                        <td class="py-3 px-4">Maintenance Team</td>
-                        <td class="py-3 px-4">8 hours</td>
-                        <td class="py-3 px-4">Maintenance Lead</td>
-                    </tr>
-                    <tr class="border-b">
-                        <td class="py-3 px-4">Facility Ambience</td>
-                        <td class="py-3 px-4">Facilities Feedback</td>
-                        <td class="py-3 px-4 text-yellow-500">Medium</td>
-                        <td class="py-3 px-4">Operations/Facility</td>
-                        <td class="py-3 px-4">24 hours</td>
-                        <td class="py-3 px-4">Facility Manager</td>
-                    </tr>
-                    <tr class="border-b bg-gray-50">
-                        <td class="py-3 px-4">Training Quality</td>
-                        <td class="py-3 px-4">Trainer Feedback</td>
-                        <td class="py-3 px-4 text-red-500">High</td>
-                        <td class="py-3 px-4">Training Department</td>
-                        <td class="py-3 px-4">12 hours</td>
-                        <td class="py-3 px-4">Master Trainer</td>
-                    </tr>
-                    <tr class="border-b">
-                        <td class="py-3 px-4">Trainer Behavior</td>
-                        <td class="py-3 px-4">Trainer Feedback</td>
-                        <td class="py-3 px-4 text-red-500">High</td>
-                        <td class="py-3 px-4">HR/Training</td>
-                        <td class="py-3 px-4">12 hours</td>
-                        <td class="py-3 px-4">HR Manager</td>
-                    </tr>
-                    <tr class="border-b bg-gray-50">
-                        <td class="py-3 px-4">Trainer Expertise</td>
-                        <td class="py-3 px-4">Trainer Feedback</td>
-                        <td class="py-3 px-4 text-yellow-500">Medium</td>
-                        <td class="py-3 px-4">Training Department</td>
-                        <td class="py-3 px-4">24 hours</td>
-                        <td class="py-3 px-4">Master Trainer</td>
-                    </tr>
-                    <tr class="border-b">
-                        <td class="py-3 px-4">Class Scheduling</td>
-                        <td class="py-3 px-4">Class Experience Feedback</td>
-                        <td class="py-3 px-4 text-yellow-500">Medium</td>
-                        <td class="py-3 px-4">Scheduling Team</td>
-                        <td class="py-3 px-4">24 hours</td>
-                        <td class="py-3 px-4">Class Coordinator</td>
-                    </tr>
-                    <tr class="border-b bg-gray-50">
-                        <td class="py-3 px-4">Class Variety</td>
-                        <td class="py-3 px-4">Class Experience Feedback</td>
-                        <td class="py-3 px-4 text-yellow-500">Medium</td>
-                        <td class="py-3 px-4">Program Development</td>
-                        <td class="py-3 px-4">48 hours</td>
-                        <td class="py-3 px-4">Training Associate</td>
-                    </tr>
-                    <tr class="border-b">
-                        <td class="py-3 px-4">Class Difficulty</td>
-                        <td class="py-3 px-4">Class Experience Feedback</td>
-                        <td class="py-3 px-4 text-green-500">Low</td>
-                        <td class="py-3 px-4">Training Department</td>
-                        <td class="py-3 px-4">72 hours</td>
-                        <td class="py-3 px-4">Master Trainer</td>
-                    </tr>
-                    <tr class="border-b bg-gray-50">
-                        <td class="py-3 px-4">Instructor Quality</td>
-                        <td class="py-3 px-4">Class Experience Feedback</td>
-                        <td class="py-3 px-4 text-red-500">High</td>
-                        <td class="py-3 px-4">Training Department</td>
-                        <td class="py-3 px-4">12 hours</td>
-                        <td class="py-3 px-4">Master Trainer</td>
-                    </tr>
-                    <tr class="border-b">
-                        <td class="py-3 px-4">Pricing</td>
-                        <td class="py-3 px-4">Membership/Billing Feedback</td>
-                        <td class="py-3 px-4 text-red-500">High</td>
-                        <td class="py-3 px-4">Billing/Finance</td>
-                        <td class="py-3 px-4">24 hours</td>
-                        <td class="py-3 px-4">Operations</td>
-                    </tr>
-                    <tr class="border-b bg-gray-50">
-                        <td class="py-3 px-4">Membership Plans</td>
-                        <td class="py-3 px-4">Membership/Billing Feedback</td>
-                        <td class="py-3 px-4 text-yellow-500">Medium</td>
-                        <td class="py-3 px-4">Membership Team</td>
-                        <td class="py-3 px-4">48 hours</td>
-                        <td class="py-3 px-4">Membership Manager</td>
-                    </tr>
-                    <tr class="border-b">
-                        <td class="py-3 px-4">Billing Issues</td>
-                        <td class="py-3 px-4">Membership/Billing Feedback</td>
-                        <td class="py-3 px-4 text-red-500">High</td>
-                        <td class="py-3 px-4">Billing/Finance</td>
-                        <td class="py-3 px-4">12 hours</td>
-                        <td class="py-3 px-4">Operations</td>
-                    </tr>
-                    <tr class="border-b bg-gray-50">
-                        <td class="py-3 px-4">Cancellation Policy</td>
-                        <td class="py-3 px-4">Membership/Billing Feedback</td>
-                        <td class="py-3 px-4 text-yellow-500">Medium</td>
-                        <td class="py-3 px-4">Membership Team</td>
-                        <td class="py-3 px-4">24 hours</td>
-                        <td class="py-3 px-4">Membership Manager</td>
-                    </tr>
-                    <tr class="border-b">
-                        <td class="py-3 px-4">Staff Behavior</td>
-                        <td class="py-3 px-4">Customer Service Feedback</td>
-                        <td class="py-3 px-4 text-red-500">High</td>
-                        <td class="py-3 px-4">Customer Service</td>
-                        <td class="py-3 px-4">12 hours</td>
-                        <td class="py-3 px-4">Customer Service Lead</td>
-                    </tr>
-                    <tr class="border-b bg-gray-50">
-                        <td class="py-3 px-4">Query Resolution</td>
-                        <td class="py-3 px-4">Customer Service Feedback</td>
-                        <td class="py-3 px-4 text-yellow-500">Medium</td>
-                        <td class="py-3 px-4">Customer Service</td>
-                        <td class="py-3 px-4">24 hours</td>
-                        <td class="py-3 px-4">Customer Service Lead</td>
-                    </tr>
-                    <tr class="border-b">
-                        <td class="py-3 px-4">Complaint Handling</td>
-                        <td class="py-3 px-4">Customer Service Feedback</td>
-                        <td class="py-3 px-4 text-red-500">High</td>
-                        <td class="py-3 px-4">Customer Service</td>
-                        <td class="py-3 px-4">12 hours</td>
-                        <td class="py-3 px-4">Customer Service Lead</td>
-                    </tr>
-                    <tr class="border-b bg-gray-50">
-                        <td class="py-3 px-4">New Programs</td>
-                        <td class="py-3 px-4">Program/Offerings Feedback</td>
-                        <td class="py-3 px-4 text-yellow-500">Medium</td>
-                        <td class="py-3 px-4">Program Development</td>
-                        <td class="py-3 px-4">48 hours</td>
-                        <td class="py-3 px-4">Training Associate</td>
-                    </tr>
-                    <tr class="border-b">
-                        <td class="py-3 px-4">Workshops</td>
-                        <td class="py-3 px-4">Program/Offerings Feedback</td>
-                        <td class="py-3 px-4 text-yellow-500">Medium</td>
-                        <td class="py-3 px-4">Program Development</td>
-                        <td class="py-3 px-4">48 hours</td>
-                        <td class="py-3 px-4">Training Associate</td>
-                    </tr>
-                    <tr class="border-b bg-gray-50">
-                        <td class="py-3 px-4">Nutrition Advice</td>
-                        <td class="py-3 px-4">Program/Offerings Feedback</td>
-                        <td class="py-3 px-4 text-yellow-500">Medium</td>
-                        <td class="py-3 px-4">Wellness/Nutrition</td>
-                        <td class="py-3 px-4">48 hours</td>
-                        <td class="py-3 px-4">Nutritionist</td>
-                    </tr>
-                    <tr class="border-b">
-                        <td class="py-3 px-4">Mobile App Issues</td>
-                        <td class="py-3 px-4">Technology/Booking Feedback</td>
-                        <td class="py-3 px-4 text-yellow-500">Medium</td>
-                        <td class="py-3 px-4">IT/Tech Support</td>
-                        <td class="py-3 px-4">24 hours</td>
-                        <td class="py-3 px-4">IT Support Lead</td>
-                    </tr>
-                    <tr class="border-b bg-gray-50">
-                        <td class="py-3 px-4">Booking System</td>
-                        <td class="py-3 px-4">Technology/Booking Feedback</td>
-                        <td class="py-3 px-4 text-red-500">High</td>
-                        <td class="py-3 px-4">IT/Tech Support</td>
-                        <td class="py-3 px-4">12 hours</td>
-                        <td class="py-3 px-4">IT Support Lead</td>
-                    </tr>
-                    <tr class="border-b">
-                        <td class="py-3 px-4">Website Navigation</td>
-                        <td class="py-3 px-4">Technology/Booking Feedback</td>
-                        <td class="py-3 px-4 text-green-500">Low</td>
-                        <td class="py-3 px-4">IT/Tech Support</td>
-                        <td class="py-3 px-4">48 hours</td>
-                        <td class="py-3 px-4">IT Support Lead</td>
-                    </tr>
-                    <tr class="border-b bg-gray-50">
-                        <td class="py-3 px-4">Community Engagement</td>
-                        <td class="py-3 px-4">Community/Events Feedback</td>
-                        <td class="py-3 px-4 text-yellow-500">Medium</td>
-                        <td class="py-3 px-4">Marketing/Community</td>
-                        <td class="py-3 px-4">48 hours</td>
-                        <td class="py-3 px-4">Community Manager</td>
-                    </tr>
-                    <tr class="border-b">
-                        <td class="py-3 px-4">Events Organization</td>
-                        <td class="py-3 px-4">Community/Events Feedback</td>
-                        <td class="py-3 px-4 text-green-500">Low</td>
-                        <td class="py-3 px-4">Events Team</td>
-                        <td class="py-3 px-4">72 hours</td>
-                        <td class="py-3 px-4">Events Coordinator</td>
-                    </tr>
-                    <tr class="border-b bg-gray-50">
-                        <td class="py-3 px-4">Social Media Communication</td>
-                        <td class="py-3 px-4">Community/Events Feedback</td>
-                        <td class="py-3 px-4 text-green-500">Low</td>
-                        <td class="py-3 px-4">Marketing</td>
-                        <td class="py-3 px-4">48 hours</td>
-                        <td class="py-3 px-4">Social Media Manager</td>
-                    </tr>
-                    <tr class="border-b">
-                        <td class="py-3 px-4">General Suggestions</td>
-                        <td class="py-3 px-4">Other Feedback</td>
-                        <td class="py-3 px-4 text-green-500">Low</td>
-                        <td class="py-3 px-4">Management</td>
-                        <td class="py-3 px-4">72 hours</td>
-                        <td class="py-3 px-4">General Manager</td>
-                    </tr>
-                    <tr class="border-b bg-gray-50">
-                        <td class="py-3 px-4">Miscellaneous Comments</td>
-                        <td class="py-3 px-4">Other Feedback</td>
-                        <td class="py-3 px-4 text-green-500">Low</td>
-                        <td class="py-3 px-4">Management</td>
-                        <td class="py-3 px-4">72 hours</td>
-                        <td class="py-3 px-4">General Manager</td>
-                    </tr>
-                </tbody>
-            </table>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="bg-white shadow-md rounded-lg p-6 w-full max-w-6xl">
+        <h1 class="text-2xl font-bold mb-4">Upload and Process ZIP File</h1>
+        <div class="drag-drop-area" id="drag-drop-area">
+            <p>Drag and drop your ZIP file here or click to upload</p>
         </div>
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-2xl font-bold mb-4">Notes:</h2>
-            <div class="mb-4">
-                <h3 class="text-xl font-semibold">Priority Level:</h3>
-                <ul class="list-disc list-inside">
-                    <li><span class="font-bold text-red-500">High:</span> Issues that affect safety, immediate customer satisfaction, or operational functionality.</li>
-                    <li><span class="font-bold text-yellow-500">Medium:</span> Important feedback that should be addressed promptly but does not immediately impact operations.</li>
-                    <li><span class="font-bold text-green-500">Low:</span> Suggestions or non-critical issues that can be reviewed and addressed in routine cycles.</li>
-                </ul>
+        <input type="file" id="file-upload" accept=".zip" class="hidden">
+        <div id="loader" class="hidden mb-4">
+            <div class="flex items-center">
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div class="bg-blue-600 h-2.5 rounded-full" style="width: 0%" id="loader-bar"></div>
+                </div>
+                <span class="ml-2 text-sm font-medium text-gray-700" id="loader-percentage">0%</span>
             </div>
-            <div class="mb-4">
-                <h3 class="text-xl font-semibold">Accountable Team:</h3>
-                <p>Should be the team with the most expertise or responsibility for the area of concern.</p>
-            </div>
-            <div class="mb-4">
-                <h3 class
+        </div>
+        <div id="table-container" class="hidden overflow-x-auto">
+            <!-- Collapsible content will be inserted here -->
+        </div>
+        <div class="mt-4">
+            <button class="button" onclick="downloadCSV()">Download as CSV</button>
+            <button class="button" onclick="downloadPDF()">Download as PDF</button>
+            <button class="button" onclick="downloadImage()">Download as Image</button>
+            <button class="button" onclick="downloadConsolidatedCSV()">Download Consolidated Data</button>
+        </div>
+        <i class="fas fa-upload icon" id="upload-icon" style="display: none;" onclick="toggleUpload()"></i>
+    </div>
+
+    <script>
+        document.getElementById('drag-drop-area').addEventListener('click', () => {
+            document.getElementById('file-upload').click();
+        });
+
+        document.getElementById('file-upload').addEventListener('change', handleFileUpload);
+        document.getElementById('drag-drop-area').addEventListener('dragover', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.dataTransfer.dropEffect = 'copy';
+        });
+
+        document.getElementById('drag-drop-area').addEventListener('drop', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileUpload({ target: { files } });
+            }
+        });
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file && file.name.endsWith('.zip')) {
+                document.getElementById('loader').classList.remove('hidden');
+                processZipFile(file);
+            } else {
+                alert('Please upload a valid ZIP file.');
+            }
+        }
+
+        function processZipFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const zip = new JSZip();
+                zip.loadAsync(event.target.result).then(function(contents) {
+                    const csvFiles = [];
+                    const totalFiles = Object.keys(contents.files).length;
+                    let processedFiles = 0;
+
+                    Object.keys(contents.files).forEach(function(filename) {
+                        if (filename.endsWith('aggregate.csv')) {
+                            csvFiles.push(contents.files[filename].async('string').then(content => {
+                                processedFiles++;
+                                updateProgressBar(processedFiles, totalFiles);
+                                return content;
+                            }));
+                        } else {
+                            processedFiles++;
+                            updateProgressBar(processedFiles, totalFiles);
+                        }
+                    });
+
+                    Promise.all(csvFiles).then(function(csvContents) {
+                        const consolidatedData = consolidateCSVData(csvContents);
+                        displayTable(consolidatedData);
+                    });
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function updateProgressBar(processedFiles, totalFiles) {
+            const percentage = Math.round((processedFiles / totalFiles) * 100);
+            document.getElementById('loader-bar').style.width = percentage + '%';
+            document.getElementById('loader-percentage').textContent = percentage + '%';
+        }
+
+        function getMonthYear(dateString) {
+            const date = new Date(dateString);
+            const month = date.toLocaleString('default', { month: 'short' });
+            const year = date.getFullYear().toString().slice(-2);
+            return `${month}-${year}`;
+        }
+
+        function consolidateCSVData(csvContents) {
+            const consolidatedData = [];
+            const teacherData = {};
+
+            csvContents.forEach(content => {
+                const parsedData = Papa.parse(content, { header: true }).data;
+
+                parsedData.forEach(row => {
+                    const teacherName = `${row['Teacher First Name']} ${row['Teacher Last Name']}`;
+                    const location = row['Location'];
+                    const sessionName = row['Class name'];
+                    const checkedIn = parseInt(row['Checked in']) || 0;
+                    const monthYear = getMonthYear(row['Class date']);
+
+                    if (!teacherData[location]) teacherData[location] = {};
+                    if (!teacherData[location][monthYear]) teacherData[location][monthYear] = {};
+                    if (!teacherData[location][monthYear][teacherName]) {
+                        teacherData[location][monthYear][teacherName] = {
+                            teacherName,
+                            location,
+                            cycleSessions: 0,
+                            emptyCycleSessions: 0,
+                            nonEmptyCycleSessions: 0,
+                            cycleCustomers: 0,
+                            barreSessions: 0,
+                            emptyBarreSessions: 0,
+                            nonEmptyBarreSessions: 0,
+                            barreCustomers: 0,
+                            totalSessions: 0,
+                            totalEmptySessions: 0,
+                            totalNonEmptySessions: 0,
+                            totalCustomers: 0
+                        };
+                    }
+
+                    const teacher = teacherData[location][monthYear][teacherName];
+
+                    if (sessionName.toLowerCase().includes('powercycle')) {
+                        teacher.cycleSessions++;
+                        if (checkedIn === 0) {
+                            teacher.emptyCycleSessions++;
+                        } else {
+                            teacher.nonEmptyCycleSessions++;
+                            teacher.cycleCustomers += checkedIn;
+                        }
+                    } else if (!sessionName.toLowerCase().includes('powercycle')) {
+                        teacher.barreSessions++;
+                        if (checkedIn === 0) {
+                            teacher.emptyBarreSessions++;
+                        } else {
+                            teacher.nonEmptyBarreSessions++;
+                            teacher.barreCustomers += checkedIn;
+                        }
+                    }
+
+                    teacher.totalSessions = teacher.cycleSessions + teacher.barreSessions;
+                    teacher.totalEmptySessions = teacher.emptyCycleSessions + teacher.emptyBarreSessions;
+                    teacher.totalNonEmptySessions = teacher.nonEmptyCycleSessions + teacher.nonEmptyBarreSessions;
+                    teacher.totalCustomers = teacher.cycleCustomers + teacher.barreCustomers;
+                });
+            });
+
+            for (const location in teacherData) {
+                for (const monthYear in teacherData[location]) {
+                    for (const teacherName in teacherData[location][monthYear]) {
+                        const data = teacherData[location][monthYear][teacherName];
+                        consolidatedData.push({
+                            teacherName: data.teacherName,
+                            location: data.location,
+                            cycleSessions: data.cycleSessions,
+                            emptyCycleSessions: data.emptyCycleSessions,
+                            nonEmptyCycleSessions: data.nonEmptyCycleSessions,
+                            cycleCustomers: data.cycleCustomers,
+                            barreSessions: data.barreSessions,
+                            emptyBarreSessions: data.emptyBarreSessions,
+                            nonEmptyBarreSessions: data.nonEmptyBarreSessions,
+                            barreCustomers: data.barreCustomers,
+                            totalSessions: data.totalSessions,
+                            totalEmptySessions: data.totalEmptySessions,
+                            totalNonEmptySessions: data.totalNonEmptySessions,
+                            totalCustomers: data.totalCustomers,
+                            period: monthYear
+                        });
+                    }
+                }
+            }
+
+            return consolidatedData;
+        }
+
+        function displayTable(data) {
+            const tableContainer = document.getElementById('table-container');
+            tableContainer.innerHTML = '';
+
+            const groupedData = data.reduce((acc, row) => {
+                if (!acc[row.location]) acc[row.location] = [];
+                acc[row.location].push(row);
+                return acc;
+            }, {});
+
+            let overallTotals = {
+                cycleSessions: 0,
+                emptyCycleSessions: 0,
+                nonEmptyCycleSessions: 0,
+                cycleCustomers: 0,
+                barreSessions: 0,
+                emptyBarreSessions: 0,
+                nonEmptyBarreSessions: 0,
+                barreCustomers: 0,
+                totalSessions: 0,
+                totalEmptySessions: 0,
+                totalNonEmptySessions: 0,
+                totalCustomers: 0
+            };
+
+            for (const location in groupedData) {
+                const button = document.createElement('button');
+                button.className = 'collapsible';
+                button.textContent = location;
+                button.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    const content = this.nextElementSibling;
+                    if (content.style.display === 'block') {
+                        content.style.display = 'none';
+                    } else {
+                        content.style.display = 'block';
+                    }
+                });
+
+                const content = document.createElement('div');
+                content.className = 'content';
+                content.style.display = 'block';
+
+                const tableWrapper = document.createElement('div');
+                tableWrapper.className = 'overflow-x-auto';
+
+                const table = document.createElement('table');
+                table.className = 'min-w-full bg-white border border-gray-200';
+
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                ['Teacher Name', 'Location', 'Cycle Sessions', 'Empty Cycle Sessions', 'Non-Empty Cycle Sessions', 'Cycle Customers', 'Barre Sessions', 'Empty Barre Sessions', 'Non-Empty Barre Sessions', 'Barre Customers', 'Total Sessions', 'Total Empty Sessions', 'Total Non-Empty Sessions', 'Total Customers', 'Period'].forEach(header => {
+                    const th = document.createElement('th');
+                    th.textContent = header;
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+
+                const tbody = document.createElement('tbody');
+                let locationTotals = {
+                    cycleSessions: 0,
+                    emptyCycleSessions: 0,
+                    nonEmptyCycleSessions: 0,
+                    cycleCustomers: 0,
+                    barreSessions: 0,
+                    emptyBarreSessions: 0,
+                    nonEmptyBarreSessions: 0,
+                    barreCustomers: 0,
+                    totalSessions: 0,
+                    totalEmptySessions: 0,
+                    totalNonEmptySessions: 0,
+                    totalCustomers: 0
+                };
+
+                groupedData[location].forEach(row => {
+                    const tr = document.createElement('tr');
+                    Object.values(row).forEach(cell => {
+                        const td = document.createElement('td');
+                        td.textContent = cell;
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+
+                    // Update location totals
+                    locationTotals.cycleSessions += row.cycleSessions;
+                    locationTotals.emptyCycleSessions += row.emptyCycleSessions;
+                    locationTotals.nonEmptyCycleSessions += row.nonEmptyCycleSessions;
+                    locationTotals.cycleCustomers += row.cycleCustomers;
+                    locationTotals.barreSessions += row.barreSessions;
+                    locationTotals.emptyBarreSessions += row.emptyBarreSessions;
+                    locationTotals.nonEmptyBarreSessions += row.nonEmptyBarreSessions;
+                    locationTotals.barreCustomers += row.barreCustomers;
+                    locationTotals.totalSessions += row.totalSessions;
+                    locationTotals.totalEmptySessions += row.totalEmptySessions;
+                    locationTotals.totalNonEmptySessions += row.totalNonEmptySessions;
+                    locationTotals.totalCustomers += row.totalCustomers;
+                });
+
+                // Add totals row for location
+                const totalsRow = document.createElement('tr');
+                totalsRow.style.fontWeight = 'bold';
+                totalsRow.innerHTML = `<td>Totals</td><td>${location}</td><td>${locationTotals.cycleSessions}</td><td>${locationTotals.emptyCycleSessions}</td><td>${locationTotals.nonEmptyCycleSessions}</td><td>${locationTotals.cycleCustomers}</td><td>${locationTotals.barreSessions}</td><td>${locationTotals.emptyBarreSessions}</td><td>${locationTotals.nonEmptyBarreSessions}</td><td>${locationTotals.barreCustomers}</td><td>${locationTotals.totalSessions}</td><td>${locationTotals.totalEmptySessions}</td><td>${locationTotals.totalNonEmptySessions}</td><td>${locationTotals.totalCustomers}</td><td>-</td>`;
+                tbody.appendChild(totalsRow);
+
+                table.appendChild(tbody);
+                tableWrapper.appendChild(table);
+                content.appendChild(tableWrapper);
+                tableContainer.appendChild(button);
+                tableContainer.appendChild(content);
+
+                // Update overall totals
+                overallTotals.cycleSessions += locationTotals.cycleSessions;
+                overallTotals.emptyCycleSessions += locationTotals.emptyCycleSessions;
+                overallTotals.nonEmptyCycleSessions += locationTotals.nonEmptyCycleSessions;
+                overallTotals.cycleCustomers += locationTotals.cycleCustomers;
+                overallTotals.barreSessions += locationTotals.barreSessions;
+                overallTotals.emptyBarreSessions += locationTotals.emptyBarreSessions;
+                overallTotals.nonEmptyBarreSessions += locationTotals.nonEmptyBarreSessions;
+                overallTotals.barreCustomers += locationTotals.barreCustomers;
+                overallTotals.totalSessions += locationTotals.totalSessions;
+                overallTotals.totalEmptySessions += locationTotals.totalEmptySessions;
+                overallTotals.totalNonEmptySessions += locationTotals.totalNonEmptySessions;
+                overallTotals.totalCustomers += locationTotals.totalCustomers;
+            }
+
+            // Add grand totals row
+            const grandTotalsRow = document.createElement('tr');
+            grandTotalsRow.style.fontWeight = 'bold';
+            grandTotalsRow.innerHTML = `<td>Grand Total</td><td>-</td><td>${overallTotals.cycleSessions}</td><td>${overallTotals.emptyCycleSessions}</td><td>${overallTotals.nonEmptyCycleSessions}</td><td>${overallTotals.cycleCustomers}</td><td>${overallTotals.barreSessions}</td><td>${overallTotals.emptyBarreSessions}</td><td>${overallTotals.nonEmptyBarreSessions}</td><td>${overallTotals.barreCustomers}</td><td>${overallTotals.totalSessions}</td><td>${overallTotals.totalEmptySessions}</td><td>${overallTotals.totalNonEmptySessions}</td><td>${overallTotals.totalCustomers}</td><td>-</td>`;
+            const grandTotalsTable = document.createElement('table');
+            grandTotalsTable.className = 'min-w-full bg-white border border-gray-200 mt-4';
+            const grandTotalsTbody = document.createElement('tbody');
+            grandTotalsTbody.appendChild(grandTotalsRow);
+            grandTotalsTable.appendChild(grandTotalsTbody);
+            tableContainer.appendChild(grandTotalsTable);
+
+            document.getElementById('loader').classList.add('hidden');
+            tableContainer.classList.remove('hidden');
+            document.getElementById('drag-drop-area').style.display = 'none';
+            document.getElementById('upload-icon').style.display = 'block';
+        }
+
+        function toggleUpload() {
+            const dragDropArea = document.getElementById('drag-drop-area');
+            const uploadIcon = document.getElementById('upload-icon');
+            if (dragDropArea.style.display === 'none') {
+                dragDropArea.style.display = 'block';
+                uploadIcon.style.display = 'none';
+            } else {
+                dragDropArea.style.display = 'none';
+                uploadIcon.style.display = 'block';
+            }
+        }
+        function downloadCSV() {
+            const table = document.querySelector('#table-container table');
+            let csvContent = '';
+            const rows = table.querySelectorAll('tr');
+
+            rows.forEach(row => {
+                const cols = row.querySelectorAll('td, th');
+                const rowData = Array.from(cols).map(col => col.textContent).join(',');
+                csvContent += rowData + '\n';
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'table_data.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const table = document.querySelector('#table-container table');
+            doc.autoTable({ html: table });
+            doc.save('table_data.pdf');
+        }
+
+        function downloadImage() {
+            const tableContainer = document.getElementById('table-container');
+            html2canvas(tableContainer).then(canvas => {
+                const a = document.createElement('a');
+                a.href = canvas.toDataURL('image/png');
+                a.download = 'table_data.png';
+                a.click();
+            });
+        }
+
+        function downloadConsolidatedCSV() {
+            // Assuming consolidated data is stored in a variable called consolidatedData
+            let csvContent = 'Teacher Name,Location,Cycle Sessions,Empty Cycle Sessions,Non-Empty Cycle Sessions,Cycle Customers,Barre Sessions,Empty Barre Sessions,Non-Empty Barre Sessions,Barre Customers,Total Sessions,Total Empty Sessions,Total Non-Empty Sessions,Total Customers,Period\n';
+            
+            consolidatedData.forEach(row => {
+                csvContent += `${row.teacherName},${row.location},${row.cycleSessions},${row.emptyCycleSessions},${row.nonEmptyCycleSessions},${row.cycleCustomers},${row.barreSessions},${row.emptyBarreSessions},${row.nonEmptyBarreSessions},${row.barreCustomers},${row.totalSessions},${row.totalEmptySessions},${row.totalNonEmptySessions},${row.totalCustomers},${row.period}\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'consolidated_data.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+    </script>
+</body>
+</html>
